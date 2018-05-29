@@ -8,6 +8,6 @@ set (PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_INCLUDE_DIR}")
 
-add_library(retro-j SHARED library.c library.h org_qw3rtrun_libretro_EnvironmentNative.h)
+add_library(retro-j SHARED retro-j.c retro-j.h libretro.h org_qw3rtrun_libretro_EnvironmentNative.h)
 
 target_link_libraries(retro-j ${JNI_LIBRARIES})
