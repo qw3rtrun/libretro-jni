@@ -1,13 +1,16 @@
-#ifndef CTESTTEST_LIBRARY_H
-#define CTESTTEST_LIBRARY_H
+#ifndef RETROJ_H
+#define RETROJ_H
 
 #include "libretro.h"
+#include <jni.h>
 
 #ifdef __cplusplus
 extern "C"{
 #endif
 
-int f(int);
+extern uint32_t* retroj_frame_buf;
+extern retro_environment_t retroj_environment;
+extern retro_log_printf_t retroj_log_cb;
 
 #ifdef __cplusplus
 }
