@@ -11,7 +11,9 @@ set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR})
 
 include_directories(${PROJECT_INCLUDE_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${JNI_INCLUDE_DIRS})
 
 
 add_subdirectory (src)
 add_subdirectory (test)
+add_subdirectory (lib/gtest)

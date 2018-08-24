@@ -1,28 +1,41 @@
 //
-// Created by qw3rtrun on 23.05.18.
+// Created by strunov on 8/24/2018.
 //
 
-#define BOOST_TEST_MODULE libretro-j-test
-
-#include <boost/test/included/unit_test.hpp>
+#include "gtest/gtest.h"
 #include "src/retro-j.h"
 #include "src/org_qw3rtrun_libretro_cb_EnvironmentNative.h"
-
 
 bool stub_environment(unsigned cmd, void *data) {
     return false;
 }
 
-BOOST_AUTO_TEST_CASE(CheckRetroStub) {
-    retro_init();
+TEST(MAIN, workflow) {
+    EXPECT_EQ(RETRO_API_VERSION, retro_api_version());
+    struct retro_system_info info = {};
+    retro_get_system_info(&info);
+    EXPECT_STREQ("jar", info.valid_extensions);
     retro_set_environment(&stub_environment);
-    struct retro_game_info info = {.path = "../libretro.jar"};
-    bool loaded = retro_load_game(&info);
-    BOOST_CHECK_EQUAL(loaded, true);
-    retro_deinit();
+    struct retro_game_info game = {.path = "../libretro.jar"};
+    bool loaded = retro_load_game(&game);
+    EXPECT_EQ(loaded, true);
 }
 
-//int main() {
-// startJvm();
-//    return 0;
-//}
+TEST(MAIN, duplicate) {
+    EXPECT_EQ(RETRO_API_VERSION, retro_api_version());
+    struct retro_system_info info = {};
+    retro_get_system_info(&info);
+    EXPECT_STREQ("jar", info.valid_extensions);
+    retro_set_environment(&stub_environment);
+    struct retro_game_info game = {.path = "../libretro.jar"};
+    bool loaded = retro_load_game(&game);
+    EXPECT_EQ(loaded, true);
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    retro_init();
+    int i = RUN_ALL_TESTS();
+    retro_deinit();
+    return i;
+}

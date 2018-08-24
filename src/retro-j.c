@@ -11,6 +11,16 @@
 
 JavaVM* jvm;
 JNIEnv* env;
+jobject classLoader;
+jmethodID loadClass;
+jclass Retro;
+jobject retrojImpl;
+jclass Logger;
+jobject retrojLogger;
+jclass Variable;
+jmethodID newVariable;
+jmethodID getName;
+jmethodID getValue;
 
 uint32_t* retroj_frame_buf;
 retro_environment_t retroj_environment = 0;
@@ -27,6 +37,13 @@ static void fallback_log(enum retro_log_level level, const char *fmt, ...)
     va_start(va, fmt);
     vfprintf(stderr, fmt, va);
     va_end(va);
+}
+
+static void loadJavaSymbolsFromJar() {
+    Variable = (*env)->FindClass(env, "org/qw3rtrun/libretro/struct/Variable");
+    newVariable = (*env)->GetMethodID(env, Variable, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
+    getName = (*env)->GetMethodID(env, Variable, "getName", "()Ljava/lang/String;Ljava/lang/String;");
+    getValue = (*env)->GetMethodID(env, Variable, "getValue", "()Ljava/lang/String;Ljava/lang/String;");
 }
 
 unsigned retro_api_version(void)
@@ -144,20 +161,20 @@ bool retro_load_game(const struct retro_game_info *info) {
         return false;
     }
 
-    jobject loader = (*env)->CallStaticObjectMethod(env, loaderClass, loaderNew, urls);
+    classLoader = (*env)->CallStaticObjectMethod(env, loaderClass, loaderNew, urls);
 
-    jmethodID loadClass = (*env)->GetMethodID(env, loaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+    loadClass = (*env)->GetMethodID(env, loaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 
-    jclass retroClass = (*env)->CallObjectMethod(env, loader, loadClass, (*env)->NewStringUTF(env, "org.qw3rtrun.libretro.Retro"));
+    jclass Retro = (*env)->CallObjectMethod(env, classLoader, loadClass, (*env)->NewStringUTF(env, "org.qw3rtrun.libretro.Retro"));
 
-    jmethodID retroGetInstance = (*env)->GetStaticMethodID(env, retroClass, "getInstance", "(Lorg/qw3rtrun/libretro/cb/LogCallback;)Lorg/qw3rtrun/libretro/Retro;");
+    jmethodID retroGetInstance = (*env)->GetStaticMethodID(env, Retro, "getInstance", "(Lorg/qw3rtrun/libretro/cb/LogCallback;)Lorg/qw3rtrun/libretro/Retro;");
     if (!retroGetInstance) {
         retroj_log_cb(RETRO_LOG_ERROR, "Method is Not Found: org.qw3rtrun.libretro.Retro.getInstance");
         return false;
     }
 
-    jclass loggerClass = (*env)->CallObjectMethod(env, loader, loadClass, (*env)->NewStringUTF(env, "org.qw3rtrun.libretro.cb.LogCallbackNative"));
-    if (!loggerClass) {
+    Logger = (*env)->CallObjectMethod(env, classLoader, loadClass, (*env)->NewStringUTF(env, "org.qw3rtrun.libretro.cb.LogCallbackNative"));
+    if (!Logger) {
         retroj_log_cb(RETRO_LOG_ERROR, "Class is Not Found: org.qw3rtrun.libretro.cb.LogCallbackNative");
         return false;
     }
@@ -166,17 +183,17 @@ bool retro_load_game(const struct retro_game_info *info) {
             {"call",    "(ILjava/lang/String;)V",  (void *)&Java_org_qw3rtrun_libretro_cb_LogCallbackNative_call}
     };
 
-    (*env)->RegisterNatives(env, loggerClass, methods, sizeof(methods)/sizeof(methods[0]));
+    (*env)->RegisterNatives(env, Logger, methods, sizeof(methods)/sizeof(methods[0]));
 
-    jmethodID loggerNew = (*env)->GetMethodID(env, loggerClass, "<init>", "()V");
+    jmethodID loggerNew = (*env)->GetMethodID(env, Logger, "<init>", "()V");
     if (!loggerNew) {
         retroj_log_cb(RETRO_LOG_ERROR, "Method is Not Found: org.qw3rtrun.libretro.Retro.getInstance");
         return false;
     }
 
-    jobject logger = (*env)->NewObject(env, loggerClass, loggerNew);
+    retrojLogger = (*env)->NewObject(env, Logger, loggerNew);
 
-    jobject retroImpl = (*env)->CallStaticObjectMethod(env, retroClass, retroGetInstance, logger);
+    retrojImpl = (*env)->CallStaticObjectMethod(env, Retro, retroGetInstance, retrojLogger);
 
     return true;
 }
