@@ -5,18 +5,15 @@
 #include <string.h>
 
 #include "retro-j.h"
+#include "classloader.h"
 #include "org_qw3rtrun_libretro_cb_EnvironmentNative.h"
 #include "org_qw3rtrun_libretro_cb_LogCallbackNative.h"
 #include <jni.h>
 
 JavaVM* jvm;
 JNIEnv* env;
-jobject classLoader;
-jmethodID loadClass;
 jclass Retro;
 jobject retrojImpl;
-jclass Logger;
-jobject retrojLogger;
 jclass Variable;
 jmethodID newVariable;
 jmethodID getName;
@@ -94,78 +91,16 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 }
 
 bool retro_load_game(const struct retro_game_info *info) {
-
     if (!(info->path)) {
         retroj_log_cb(RETRO_LOG_ERROR, "Path of a Game Jar is Not Specified");
         return false;
     }
-    jstring jarPath = (*env)->NewStringUTF(env, info->path);
 
-    jclass fileClass = (*env)->FindClass(env, "java/io/File");
-    if (!fileClass) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Class is Not Found: java.io.File");
-        return false;
-    }
+    loadJar(env, info->path);
+    initLoggerOnJarLoaded(env);
 
-    jmethodID fileNew = (*env)->GetMethodID(env, fileClass, "<init>", "(Ljava/lang/String;)V");
-    if (!fileNew) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Method is Not Found: java.io.File.<init>");
-        return false;
-    }
 
-    jobject file = (*env)->NewObject(env, fileClass, fileNew, jarPath);
-    if (!file) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Game File is Not Found");
-        return false;
-    }
-
-    jmethodID fileToUri = (*env)->GetMethodID(env, fileClass, "toURI", "()Ljava/net/URI;");
-    if (!fileToUri) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Method is Not Found: java.io.File.toURI");
-        return false;
-    }
-
-    jobject jarURI = (*env)->CallObjectMethod(env, file, fileToUri);
-
-    jclass uriClass = (*env)->FindClass(env, "java/net/URI");
-    if (!uriClass) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Class is Not Found: java.net.URI");
-        return false;
-    }
-
-    jmethodID uriToUrl = (*env)->GetMethodID(env, uriClass, "toURL", "()Ljava/net/URL;");
-    if (!uriToUrl) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Method is Not Found: java.net.URI.toURL");
-        return false;
-    }
-
-    jclass urlClass = (*env)->FindClass(env, "java/net/URL");
-    if (!urlClass) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Class is Not Found: java.net.URL");
-        return false;
-    }
-
-    jobject url = (*env)->CallObjectMethod(env, jarURI, uriToUrl);
-
-    jclass loaderClass = (*env)->FindClass(env, "java/net/URLClassLoader");
-    if (!loaderClass) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Class is Not Found: java.net.URLClassLoader");
-        return false;
-    }
-
-    jarray urls = (*env)->NewObjectArray(env, 1, urlClass, url);
-
-    jmethodID loaderNew = (*env)->GetStaticMethodID(env, loaderClass, "newInstance", "([Ljava/net/URL;)Ljava/net/URLClassLoader;");
-    if (!loaderNew) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Method is Not Found: java.net.URLClassLoader.newInstance");
-        return false;
-    }
-
-    classLoader = (*env)->CallStaticObjectMethod(env, loaderClass, loaderNew, urls);
-
-    loadClass = (*env)->GetMethodID(env, loaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-
-    jclass Retro = (*env)->CallObjectMethod(env, classLoader, loadClass, (*env)->NewStringUTF(env, "org.qw3rtrun.libretro.Retro"));
+    jclass Retro = loadClass(env, "org.qw3rtrun.libretro.Retro");
 
     jmethodID retroGetInstance = (*env)->GetStaticMethodID(env, Retro, "getInstance", "(Lorg/qw3rtrun/libretro/cb/LogCallback;)Lorg/qw3rtrun/libretro/Retro;");
     if (!retroGetInstance) {
@@ -173,27 +108,7 @@ bool retro_load_game(const struct retro_game_info *info) {
         return false;
     }
 
-    Logger = (*env)->CallObjectMethod(env, classLoader, loadClass, (*env)->NewStringUTF(env, "org.qw3rtrun.libretro.cb.LogCallbackNative"));
-    if (!Logger) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Class is Not Found: org.qw3rtrun.libretro.cb.LogCallbackNative");
-        return false;
-    }
-
-    static JNINativeMethod methods[] = {
-            {"call",    "(ILjava/lang/String;)V",  (void *)&Java_org_qw3rtrun_libretro_cb_LogCallbackNative_call}
-    };
-
-    (*env)->RegisterNatives(env, Logger, methods, sizeof(methods)/sizeof(methods[0]));
-
-    jmethodID loggerNew = (*env)->GetMethodID(env, Logger, "<init>", "()V");
-    if (!loggerNew) {
-        retroj_log_cb(RETRO_LOG_ERROR, "Method is Not Found: org.qw3rtrun.libretro.Retro.getInstance");
-        return false;
-    }
-
-    retrojLogger = (*env)->NewObject(env, Logger, loggerNew);
-
-    retrojImpl = (*env)->CallStaticObjectMethod(env, Retro, retroGetInstance, retrojLogger);
+    retrojImpl = (*env)->CallStaticObjectMethod(env, Retro, retroGetInstance, getLogger());
 
     return true;
 }

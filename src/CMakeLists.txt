@@ -11,6 +11,8 @@ include_directories("${PROJECT_INCLUDE_DIR}")
 add_library(retro-j SHARED
         retro-j.c retro-j.h
         libretro.h
+        classloader.c
+        classloader.h
         org_qw3rtrun_libretro_cb_EnvironmentNative.c
         org_qw3rtrun_libretro_cb_EnvironmentNative.h
         org_qw3rtrun_libretro_cb_LogCallbackNative.c

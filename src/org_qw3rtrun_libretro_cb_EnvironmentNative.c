@@ -1,9 +1,10 @@
 #include "org_qw3rtrun_libretro_cb_EnvironmentNative.h"
+#include "org_qw3rtrun_libretro_cb_LogCallbackNative.h"
 #include "retro-j.h"
 
 JNIEXPORT jobject JNICALL Java_org_qw3rtrun_libretro_cb_EnvironmentNative_getLogInterface
         (JNIEnv *env, jobject envNative) {
-    return retrojLogger;
+    return getLogger();
 }
 
 JNIEXPORT jobject JNICALL Java_org_qw3rtrun_libretro_cb_EnvironmentNative_getVariable
@@ -52,3 +53,9 @@ JNIEXPORT jboolean JNICALL Java_org_qw3rtrun_libretro_cb_EnvironmentNative_setPi
     enum retro_pixel_format rpf = (enum retro_pixel_format) pixelFormat;
     retroj_environment(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rpf);
 }
+
+JNIEXPORT jobject JNICALL Java_org_qw3rtrun_libretro_cb_EnvironmentNative_getCurrentSoftwareFrameBuffer0
+        (JNIEnv * env, jobject this) {
+    retroj_environment(RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER )
+}
+

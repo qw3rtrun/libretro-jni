@@ -15,6 +15,10 @@ extern "C" {
 JNIEXPORT void JNICALL Java_org_qw3rtrun_libretro_cb_LogCallbackNative_call
   (JNIEnv *, jobject, jint, jstring);
 
+void initLoggerOnJarLoaded(JNIEnv *env);
+
+jobject getLogger();
+
 #ifdef __cplusplus
 }
 #endif
