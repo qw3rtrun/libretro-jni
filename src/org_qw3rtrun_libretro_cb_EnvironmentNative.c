@@ -56,6 +56,7 @@ JNIEXPORT jboolean JNICALL Java_org_qw3rtrun_libretro_cb_EnvironmentNative_setPi
 
 JNIEXPORT jobject JNICALL Java_org_qw3rtrun_libretro_cb_EnvironmentNative_getCurrentSoftwareFrameBuffer0
         (JNIEnv * env, jobject this) {
-    retroj_environment(RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER )
+    // TODO retroj_environment(RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER )
+    return NULL;
 }
 
