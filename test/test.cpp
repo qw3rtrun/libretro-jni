@@ -32,11 +32,6 @@ TEST(MAIN, duplicate) {
     EXPECT_EQ(loaded, true);
 }
 
-TEST(SAMPLES, env) {
-    char* actual = getenv("TEST_VAR");
-    EXPECT_STREQ("value1", actual);
-}
-
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     retro_init();

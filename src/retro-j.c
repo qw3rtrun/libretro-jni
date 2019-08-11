@@ -29,11 +29,7 @@ static float last_sample_rate;
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
-    (void)level;
-    va_list va;
-    va_start(va, fmt);
-    vfprintf(stderr, fmt, va);
-    va_end(va);
+    fprintf(stderr, "[%u] %s\n", level, fmt);
 }
 
 static void loadJavaSymbolsFromJar() {
@@ -61,7 +57,7 @@ void retro_init(void)
 {
     JavaVMInitArgs args;
     JavaVMOption options[0];
-    args.version = JNI_VERSION_9;
+    args.version = JNI_VERSION_10;
     args.nOptions = 0;
     args.options = options;
     args.ignoreUnrecognized = JNI_TRUE;
